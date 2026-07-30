@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.env
+client_secret_*.json
+/firstmate/
+backend/data/google-tokens.json
+backend/data/usage-cache.json
+backend/data/claude-browser-profile/
+*.log
+.DS_Store

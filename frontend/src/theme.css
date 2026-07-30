@@ -1,0 +1,487 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+:root {
+  --bg: #f5f2e8;
+  --panel: #fffdf7;
+  --panel-raised: #ece7d8;
+  --ink: #22252b;
+  --ink-dim: #6b7080;
+  --accent-habits: #1f9d55;
+  --accent-calendar: #1a73c7;
+  --accent-learning: #c9760f;
+  --accent-usage: #7c3aed;
+  --danger: #c53c56;
+  --shadow: #22252b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Press Start 2P", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.025) 0px,
+    rgba(0, 0, 0, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-family: inherit;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.app-shell {
+  min-height: 100%;
+  padding: 32px 24px 64px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.app-title {
+  font-size: 22px;
+  color: var(--ink);
+  text-shadow: 3px 3px 0 var(--shadow);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border: 2px solid var(--ink-dim);
+  padding: 8px 12px;
+}
+
+.back-link:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---- pixel panel / tile primitives ---- */
+
+.pixel-panel {
+  background: var(--panel);
+  border: 4px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+  padding: 20px;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.tile {
+  background: var(--panel);
+  border: 4px solid var(--tile-accent, var(--ink));
+  box-shadow: 6px 6px 0 var(--shadow);
+  padding: 22px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  text-decoration: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tile:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 var(--shadow);
+}
+
+.tile:active {
+  transform: translate(0, 0);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.tile-label {
+  font-size: 13px;
+  color: var(--tile-accent, var(--ink));
+}
+
+.tile-snapshot {
+  font-size: 11px;
+  color: var(--ink-dim);
+  line-height: 1.9;
+}
+
+.tile-cta {
+  font-size: 10px;
+  color: var(--tile-accent, var(--ink));
+  align-self: flex-end;
+}
+
+/* ---- forms ---- */
+
+.pixel-input,
+.pixel-select,
+.pixel-textarea {
+  font-family: inherit;
+  font-size: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  border: 3px solid var(--ink-dim);
+  padding: 10px;
+  outline: none;
+}
+
+.pixel-input:focus,
+.pixel-select:focus,
+.pixel-textarea:focus {
+  border-color: var(--ink);
+}
+
+.pixel-btn {
+  font-family: inherit;
+  font-size: 11px;
+  background: var(--panel-raised);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.pixel-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.pixel-btn:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
+.pixel-btn--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.pixel-btn--accent {
+  border-color: var(--accent-calendar);
+  color: var(--accent-calendar);
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list-item {
+  background: var(--panel);
+  border: 3px solid var(--panel-raised);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--ink-dim);
+  font-size: 10px;
+}
+
+.section {
+  margin-bottom: 36px;
+}
+
+.section-title {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  font-family: inherit;
+  font-size: 11px;
+  background: var(--panel);
+  color: var(--ink-dim);
+  border: 3px solid var(--panel-raised);
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.streak-badge {
+  font-size: 10px;
+  padding: 6px 10px;
+  border: 2px solid var(--accent-habits);
+  color: var(--accent-habits);
+}
+
+.checkbox-pixel {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--ink);
+  background: var(--bg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.checkbox-pixel.checked {
+  background: var(--accent-habits);
+}
+
+/* ---- usage widget (HUD, bottom-right, all pages) ---- */
+
+.usage-widget {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 500;
+  width: 360px;
+  background: var(--panel);
+  border: 4px solid var(--accent-usage);
+  box-shadow: 6px 6px 0 var(--shadow);
+  padding: 20px;
+}
+
+.usage-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.usage-widget-title {
+  font-size: 9px;
+  color: var(--accent-usage);
+  letter-spacing: 1px;
+}
+
+.usage-live-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--accent-usage);
+  animation: usage-blink 1.6s steps(1) infinite;
+}
+
+@keyframes usage-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.usage-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.usage-right-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.usage-hero-block {
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.usage-rings {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+.usage-ring-wrap {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.usage-ring {
+  --pct: 0;
+  position: relative;
+  flex: none;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent-usage) calc(var(--pct) * 1%), var(--panel-raised) 0);
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.usage-ring-hole {
+  position: absolute;
+  inset: 20%;
+  border-radius: 50%;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.usage-ring-value {
+  color: var(--ink);
+}
+
+.usage-ring-label {
+  flex: none;
+  font-size: 7px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.usage-ring-reset {
+  flex: none;
+  font-size: 7px;
+  color: var(--ink-dim);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.usage-hero {
+  font-size: 24px;
+  color: var(--ink);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.usage-hero-label {
+  font-size: 9px;
+  color: var(--ink-dim);
+}
+
+.usage-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 48px;
+  margin-bottom: 8px;
+}
+
+.usage-bar-col {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  cursor: default;
+}
+
+.usage-bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--accent-usage);
+  border-radius: 2px 2px 0 0;
+}
+
+.usage-bar-col.is-today .usage-bar {
+  background: var(--ink);
+}
+
+.usage-widget-footer {
+  font-size: 8px;
+  color: var(--ink-dim);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.usage-connect-btn {
+  width: 100%;
+  font-family: inherit;
+  font-size: 9px;
+  background: var(--panel-raised);
+  color: var(--accent-usage);
+  border: 2px solid var(--accent-usage);
+  padding: 8px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.usage-connect-btn:hover {
+  background: var(--accent-usage);
+  color: var(--panel);
+}
+
+.usage-connect-status {
+  font-size: 8px;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
