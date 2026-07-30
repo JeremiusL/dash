@@ -123,6 +123,7 @@ h3 {
   box-shadow: 6px 6px 0 var(--shadow);
   padding: 22px;
   min-height: 190px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -130,6 +131,8 @@ h3 {
   text-decoration: none;
   color: var(--ink);
   cursor: pointer;
+  font: inherit;
+  text-align: left;
   transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
 }
 

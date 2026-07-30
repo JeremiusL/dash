@@ -97,17 +97,17 @@ calendarRouter.get("/oauth-callback", async (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
   const code = req.query.code as string | undefined;
   if (!code) {
-    res.redirect(`${frontendUrl}/calendar?error=missing_code`);
+    res.redirect(`${frontendUrl}/?error=missing_code`);
     return;
   }
   try {
     const client = getOAuthClient();
     const { tokens } = await client.getToken(code);
     await saveTokens(tokens);
-    res.redirect(`${frontendUrl}/calendar?connected=1`);
+    res.redirect(`${frontendUrl}/?connected=1`);
   } catch (err) {
     console.error("Google OAuth callback failed:", err);
-    res.redirect(`${frontendUrl}/calendar?error=oauth_failed`);
+    res.redirect(`${frontendUrl}/?error=oauth_failed`);
   }
 });
 
