@@ -52,13 +52,26 @@ export interface CalendarEvent {
   summary: string;
   start?: string;
   end?: string;
+  allDay: boolean;
   link?: string;
   calendar?: string;
+  source: "google" | "apple";
+}
+
+export interface CalendarProviderStatus {
+  configured: boolean;
+  connected: boolean;
 }
 
 export interface CalendarStatus {
-  configured: boolean;
-  connected: boolean;
+  google: CalendarProviderStatus;
+  apple: CalendarProviderStatus;
+}
+
+export interface CalendarWeek {
+  events: CalendarEvent[];
+  weekStart: string;
+  weekEnd: string;
 }
 
 export interface DayUsage {
@@ -122,7 +135,7 @@ export const api = {
   calendar: {
     status: () => request<CalendarStatus>("/calendar/status"),
     authUrl: () => request<{ url: string }>("/calendar/auth-url"),
-    events: () => request<{ events: CalendarEvent[] }>("/calendar/events"),
+    events: () => request<CalendarWeek>("/calendar/events"),
   },
   usage: {
     summary: () => request<UsageSummary>("/usage"),

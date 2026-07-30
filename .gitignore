@@ -9,3 +9,4 @@ backend/data/usage-cache.json
 backend/data/claude-browser-profile/
 *.log
 .DS_Store
+/treehouse.toml

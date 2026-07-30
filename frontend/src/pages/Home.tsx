@@ -16,14 +16,15 @@ export function Home() {
     api.learning.links.list().then(setLinks).catch(() => setLinks([]));
     api.learning.notes.list().then(setNotes).catch(() => setNotes([]));
     api.learning.readingList.list().then(setReading).catch(() => setReading([]));
-    api.calendar
-      .status()
-      .then(async (status) => {
-        setCalendarConnected(status.connected);
-        if (status.connected) {
-          const { events } = await api.calendar.events();
-          setNextEvent(events[0] ?? null);
-        }
+    Promise.all([api.calendar.status(), api.calendar.events()])
+      .then(([status, { events }]) => {
+        const connected = status.google.connected || status.apple.connected;
+        setCalendarConnected(connected);
+        const now = Date.now();
+        const upcoming = events
+          .filter((e) => e.start && new Date(e.start).getTime() >= now)
+          .sort((a, b) => new Date(a.start!).getTime() - new Date(b.start!).getTime());
+        setNextEvent(upcoming[0] ?? null);
       })
       .catch(() => setCalendarConnected(false));
   }, []);
@@ -57,7 +58,7 @@ export function Home() {
           {calendarConnected === null ? (
             "loading..."
           ) : !calendarConnected ? (
-            "Not connected. Click to link Google Calendar."
+            "Not connected. Click to set up Google or Apple Calendar."
           ) : nextEvent ? (
             <>
               next: {nextEvent.summary}

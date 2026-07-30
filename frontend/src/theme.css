@@ -10,6 +10,8 @@
   --accent-calendar: #1a73c7;
   --accent-learning: #c9760f;
   --accent-usage: #7c3aed;
+  --accent-google: #1a73c7;
+  --accent-apple: #4a4a4f;
   --danger: #c53c56;
   --shadow: #22252b;
 }
@@ -156,6 +158,106 @@ h3 {
   font-size: 10px;
   color: var(--tile-accent, var(--ink));
   align-self: flex-end;
+}
+
+/* ---- week grid (calendar page) ---- */
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.week-day {
+  background: var(--panel);
+  border: 3px solid var(--panel-raised);
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+}
+
+.week-day--today {
+  border-color: var(--accent-calendar);
+}
+
+.week-day-header {
+  padding: 8px;
+  border-bottom: 3px solid var(--panel-raised);
+  text-align: center;
+}
+
+.week-day--today .week-day-header {
+  border-bottom-color: var(--accent-calendar);
+}
+
+.week-day-name {
+  font-size: 8px;
+  color: var(--ink-dim);
+  letter-spacing: 0.5px;
+}
+
+.week-day-number {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.week-day--today .week-day-number {
+  color: var(--accent-calendar);
+}
+
+.week-day-events {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.week-event {
+  font-size: 8px;
+  line-height: 1.5;
+  padding: 4px 5px;
+  background: var(--panel-raised);
+  border-left: 3px solid var(--accent-google);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-event--apple {
+  border-left-color: var(--accent-apple);
+}
+
+.week-event-time {
+  display: block;
+  color: var(--ink-dim);
+}
+
+.week-event-summary {
+  display: block;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-google);
+  margin-right: 2px;
+}
+
+.source-dot--apple {
+  background: var(--accent-apple);
+}
+
+@media (max-width: 720px) {
+  .week-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
 }
 
 /* ---- forms ---- */
