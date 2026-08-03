@@ -35,6 +35,11 @@ export interface NoteItem {
   topic: string;
   createdAt: string;
   updatedAt: string;
+  pdf?: {
+    fileName: string;
+    storedName: string;
+    size: number;
+  };
 }
 
 export type ReadingStatus = "todo" | "in-progress" | "done";
@@ -122,6 +127,19 @@ export const api = {
       update: (id: string, data: { title?: string; body?: string; topic?: string }) =>
         request<NoteItem>(`/learning/notes/${id}`, { method: "PUT", body: JSON.stringify(data) }),
       remove: (id: string) => request<void>(`/learning/notes/${id}`, { method: "DELETE" }),
+      uploadPdf: async (data: { title: string; topic?: string; file: File }) => {
+        const form = new FormData();
+        form.append("title", data.title);
+        if (data.topic) form.append("topic", data.topic);
+        form.append("pdf", data.file);
+        const res = await fetch("/api/learning/notes/pdf", { method: "POST", body: form });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? `Request failed: ${res.status}`);
+        }
+        return res.json() as Promise<NoteItem>;
+      },
+      pdfUrl: (id: string) => `/api/learning/notes/${id}/pdf`,
     },
     readingList: {
       list: () => request<ReadingItem[]>("/learning/reading-list"),

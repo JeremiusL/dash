@@ -315,6 +315,35 @@ h3 {
   color: var(--accent-calendar);
 }
 
+.pixel-file {
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--ink-dim);
+}
+
+.pixel-file::file-selector-button {
+  font-family: inherit;
+  font-size: 11px;
+  background: var(--panel-raised);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--shadow);
+  padding: 8px 12px;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.pixel-file::file-selector-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+.pixel-file::file-selector-button:active {
+  transform: translate(0, 0);
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
 .row {
   display: flex;
   gap: 10px;

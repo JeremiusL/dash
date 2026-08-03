@@ -1,5 +1,23 @@
 import { Router } from "express";
-import { readJson, writeJson, newId } from "../store.js";
+import multer from "multer";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { readJson, writeJson, newId, DATA_DIR } from "../store.js";
+
+const PDF_DIR = path.join(DATA_DIR, "pdfs");
+await fs.mkdir(PDF_DIR, { recursive: true });
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype !== "application/pdf") {
+      cb(new Error("Only PDF files are allowed"));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 interface LinkItem {
   id: string;
@@ -16,6 +34,11 @@ interface NoteItem {
   topic: string;
   createdAt: string;
   updatedAt: string;
+  pdf?: {
+    fileName: string;
+    storedName: string;
+    size: number;
+  };
 }
 
 type ReadingStatus = "todo" | "in-progress" | "done";
@@ -91,6 +114,52 @@ learningRouter.post("/notes", async (req, res) => {
   res.status(201).json(item);
 });
 
+learningRouter.post("/notes/pdf", upload.single("pdf"), async (req, res) => {
+  const { title, topic } = req.body as { title?: string; topic?: string };
+  if (!title?.trim()) {
+    res.status(400).json({ error: "title is required" });
+    return;
+  }
+  if (!req.file) {
+    res.status(400).json({ error: "pdf file is required" });
+    return;
+  }
+  const notes = await readJson<NoteItem[]>("notes.json", []);
+  const now = new Date().toISOString();
+  const id = newId();
+  const storedName = `${id}.pdf`;
+  await fs.writeFile(path.join(PDF_DIR, storedName), req.file.buffer);
+  const item: NoteItem = {
+    id,
+    title: title.trim(),
+    body: "",
+    topic: topic?.trim() || "general",
+    createdAt: now,
+    updatedAt: now,
+    pdf: {
+      fileName: req.file.originalname,
+      storedName,
+      size: req.file.size,
+    },
+  };
+  notes.push(item);
+  await writeJson("notes.json", notes);
+  res.status(201).json(item);
+});
+
+learningRouter.get("/notes/:id/pdf", async (req, res) => {
+  const notes = await readJson<NoteItem[]>("notes.json", []);
+  const note = notes.find((n) => n.id === req.params.id);
+  if (!note?.pdf) {
+    res.status(404).json({ error: "not found" });
+    return;
+  }
+  const filePath = path.join(PDF_DIR, note.pdf.storedName);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${note.pdf.fileName.replace(/"/g, "")}"`);
+  res.sendFile(filePath);
+});
+
 learningRouter.put("/notes/:id", async (req, res) => {
   const { title, body, topic } = req.body as { title?: string; body?: string; topic?: string };
   const notes = await readJson<NoteItem[]>("notes.json", []);
@@ -109,12 +178,16 @@ learningRouter.put("/notes/:id", async (req, res) => {
 
 learningRouter.delete("/notes/:id", async (req, res) => {
   const notes = await readJson<NoteItem[]>("notes.json", []);
-  const next = notes.filter((n) => n.id !== req.params.id);
-  if (next.length === notes.length) {
+  const note = notes.find((n) => n.id === req.params.id);
+  if (!note) {
     res.status(404).json({ error: "not found" });
     return;
   }
+  const next = notes.filter((n) => n.id !== req.params.id);
   await writeJson("notes.json", next);
+  if (note.pdf) {
+    await fs.rm(path.join(PDF_DIR, note.pdf.storedName), { force: true });
+  }
   res.status(204).end();
 });
 

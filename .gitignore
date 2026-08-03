@@ -7,6 +7,8 @@ client_secret_*.json
 backend/data/google-tokens.json
 backend/data/usage-cache.json
 backend/data/claude-browser-profile/
+backend/data/pdfs/*
+!backend/data/pdfs/.gitkeep
 *.log
 .DS_Store
 /treehouse.toml

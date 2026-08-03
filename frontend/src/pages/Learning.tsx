@@ -104,6 +104,15 @@ function NotesTab() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [topic, setTopic] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  function clearFile() {
+    setFile(null);
+    setFileInputKey((k) => k + 1);
+  }
 
   function refresh() {
     return api.learning.notes.list().then(setNotes);
@@ -116,11 +125,24 @@ function NotesTab() {
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    await api.learning.notes.create({ title: title.trim(), body, topic: topic.trim() });
-    setTitle("");
-    setBody("");
-    setTopic("");
-    await refresh();
+    setError("");
+    try {
+      if (file) {
+        setUploading(true);
+        await api.learning.notes.uploadPdf({ title: title.trim(), topic: topic.trim(), file });
+      } else {
+        await api.learning.notes.create({ title: title.trim(), body, topic: topic.trim() });
+      }
+      setTitle("");
+      setBody("");
+      setTopic("");
+      clearFile();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function remove(id: string) {
@@ -142,9 +164,26 @@ function NotesTab() {
           style={{ width: "100%", marginBottom: 10 }}
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          disabled={!!file}
         />
-        <button className="pixel-btn" type="submit">
-          Add note
+        <div className="row" style={{ marginBottom: 10, alignItems: "center" }}>
+          <input
+            key={fileInputKey}
+            className="pixel-file"
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+          {file && (
+            <button type="button" className="pixel-btn pixel-btn--danger" onClick={clearFile}>
+              Clear
+            </button>
+          )}
+        </div>
+        {file && <p className="muted">Attaching PDF: {file.name} — note body is disabled while a PDF is attached.</p>}
+        {error && <p className="muted">{error}</p>}
+        <button className="pixel-btn" type="submit" disabled={uploading}>
+          {uploading ? "Uploading..." : file ? "Add note with PDF" : "Add note"}
         </button>
       </form>
 
@@ -161,6 +200,13 @@ function NotesTab() {
                 </button>
               </div>
               {n.body && <p style={{ margin: "8px 0 0" }}>{n.body}</p>}
+              {n.pdf && (
+                <p style={{ margin: "8px 0 0" }}>
+                  <a href={api.learning.notes.pdfUrl(n.id)} target="_blank" rel="noreferrer">
+                    📄 {n.pdf.fileName}
+                  </a>
+                </p>
+              )}
               <div className="muted">{n.topic}</div>
             </li>
           ))}
