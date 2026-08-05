@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import type { Habit } from "../api";
+import { HabitChart } from "../components/HabitChart";
 
 export function Habits() {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -81,6 +82,13 @@ export function Habits() {
             </li>
           ))}
         </ul>
+      )}
+
+      {!loading && habits.length > 0 && (
+        <div className="section">
+          <h2 className="section-title">Monthly tracker</h2>
+          <HabitChart habits={habits} />
+        </div>
       )}
     </>
   );
