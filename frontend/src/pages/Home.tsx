@@ -3,10 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { Tile } from "../components/Tile";
 import { WeekGrid } from "../components/WeekGrid";
 import { api } from "../api";
-import type { CalendarEvent, CalendarStatus, Habit, LinkItem, NoteItem, ReadingItem } from "../api";
+import type { AzureJob, CalendarEvent, CalendarStatus, Habit, LinkItem, NoteItem, ReadingItem } from "../api";
 
 export function Home() {
   const [habits, setHabits] = useState<Habit[] | null>(null);
+  const [azureConfigured, setAzureConfigured] = useState<boolean | null>(null);
+  const [azureJobs, setAzureJobs] = useState<AzureJob[] | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [weekStart, setWeekStart] = useState<string | null>(null);
@@ -22,6 +24,16 @@ export function Home() {
     api.learning.links.list().then(setLinks).catch(() => setLinks([]));
     api.learning.notes.list().then(setNotes).catch(() => setNotes([]));
     api.learning.readingList.list().then(setReading).catch(() => setReading([]));
+    api.jobs
+      .list()
+      .then((summary) => {
+        setAzureConfigured(summary.configured);
+        setAzureJobs(summary.jobs);
+      })
+      .catch(() => {
+        setAzureConfigured(false);
+        setAzureJobs([]);
+      });
 
     Promise.all([api.calendar.status(), api.calendar.events()])
       .then(([status, week]) => {
@@ -143,6 +155,22 @@ export function Home() {
               {links.length} link{links.length === 1 ? "" : "s"} &middot; {notes.length} note{notes.length === 1 ? "" : "s"}
               <br />
               {reading.filter((r) => r.status !== "done").length} reading item{reading.filter((r) => r.status !== "done").length === 1 ? "" : "s"} in queue
+            </>
+          )}
+        </Tile>
+
+        <Tile to="/azure-jobs" label="Azure Jobs" accent="var(--accent-jobs)" cta="View jobs">
+          {azureConfigured === null || azureJobs === null ? (
+            "loading..."
+          ) : !azureConfigured ? (
+            "Not configured. Click to see setup steps."
+          ) : azureJobs.length === 0 ? (
+            "No jobs found."
+          ) : (
+            <>
+              {azureJobs.length} job{azureJobs.length === 1 ? "" : "s"}
+              <br />
+              {azureJobs.filter((j) => j.status.toLowerCase() === "failed").length} failed
             </>
           )}
         </Tile>

@@ -10,6 +10,7 @@
   --accent-calendar: #1a73c7;
   --accent-learning: #c9760f;
   --accent-usage: #7c3aed;
+  --accent-jobs: #0f766e;
   --accent-google: #1a73c7;
   --accent-apple: #4a4a4f;
   --danger: #c53c56;
@@ -421,6 +422,29 @@ h3 {
   padding: 6px 10px;
   border: 2px solid var(--accent-habits);
   color: var(--accent-habits);
+}
+
+.status-badge {
+  font-size: 10px;
+  padding: 6px 10px;
+  border: 2px solid var(--ink-dim);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.status-badge--success {
+  border-color: var(--accent-habits);
+  color: var(--accent-habits);
+}
+
+.status-badge--failed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.status-badge--running {
+  border-color: var(--accent-calendar);
+  color: var(--accent-calendar);
 }
 
 .checkbox-pixel {

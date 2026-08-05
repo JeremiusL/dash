@@ -1,6 +1,7 @@
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     ...options,
   });
   if (!res.ok) {
@@ -98,6 +99,26 @@ export interface AccountLoginStatus {
   loggedIn: boolean;
 }
 
+export interface JobExecution {
+  name: string;
+  status: string;
+  startTime: string | null;
+  endTime: string | null;
+}
+
+export interface AzureJob {
+  name: string;
+  status: string;
+  lastRunTime: string | null;
+  executions: JobExecution[];
+}
+
+export interface AzureJobsSummary {
+  configured: boolean;
+  jobs: AzureJob[];
+  error?: string;
+}
+
 export interface AccountUsage {
   loggedIn: true;
   planName: string | null;
@@ -107,6 +128,11 @@ export interface AccountUsage {
 }
 
 export const api = {
+  auth: {
+    session: () => request<{ ok: true }>("/auth/session"),
+    login: (password: string) => request<{ ok: true }>("/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
+    logout: () => request<{ ok: true }>("/auth/logout", { method: "POST" }),
+  },
   habits: {
     list: () => request<Habit[]>("/habits"),
     create: (name: string) => request<Habit>("/habits", { method: "POST", body: JSON.stringify({ name }) }),
@@ -132,7 +158,7 @@ export const api = {
         form.append("title", data.title);
         if (data.topic) form.append("topic", data.topic);
         form.append("pdf", data.file);
-        const res = await fetch("/api/learning/notes/pdf", { method: "POST", body: form });
+        const res = await fetch("/api/learning/notes/pdf", { method: "POST", body: form, credentials: "include" });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error ?? `Request failed: ${res.status}`);
@@ -162,5 +188,45 @@ export const api = {
     status: () => request<AccountLoginStatus>("/account/status"),
     login: () => request<AccountLoginStatus>("/account/login", { method: "POST" }),
     usage: () => request<AccountUsage>("/account/usage"),
+  },
+  jobs: {
+    list: () => request<AzureJobsSummary>("/jobs"),
+    start: (name: string) =>
+      request<{ started: boolean; executionName: string | null }>(`/jobs/${encodeURIComponent(name)}/start`, {
+        method: "POST",
+      }),
+  },
+  deploy: {
+    buckets: () => request<{ buckets: { key: string; repo: string }[] }>("/deploy/buckets"),
+    build: (data: { repo: string; workflowFile: string; imageTag: string; ref?: string; agentPath?: string }) =>
+      request<{ success: boolean; conclusion: string | null; runUrl?: string; error?: string }>("/deploy/build", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    createJob: (data: { jobName: string; image: string; cronExpression: string }) =>
+      request<{ success: boolean; jobName?: string; error?: string }>("/deploy/job", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    createRepo: async (bucket: string, agentName: string, files: File[]) => {
+      const form = new FormData();
+      form.append("bucket", bucket);
+      form.append("agentName", agentName);
+      for (const file of files) form.append("files", file, file.name);
+      const res = await fetch("/api/deploy/repo", { method: "POST", body: form, credentials: "include" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Request failed: ${res.status}`);
+      }
+      return res.json() as Promise<{
+        success: boolean;
+        repo?: string;
+        workflowFile?: string;
+        agentPath?: string;
+        imageName?: string;
+        suggestedJobName?: string;
+        error?: string;
+      }>;
+    },
   },
 };
