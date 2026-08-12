@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@azure/arm-appcontainers": "^3.0.0",
+    "@azure/data-tables": "^13.3.0",
     "@azure/identity": "^4.13.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -19,6 +20,7 @@
     "libsodium-wrappers": "^0.8.4",
     "multer": "^2.2.0",
     "node-ical": "^0.27.1",
+    "nodemailer": "^6.9.16",
     "playwright": "^1.48.0",
     "tsdav": "^2.3.1"
   },
@@ -28,6 +30,7 @@
     "@types/express": "^4.17.21",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.9.0",
+    "@types/nodemailer": "^6.4.16",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }

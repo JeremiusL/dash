@@ -4,6 +4,8 @@ import { Home } from "./pages/Home";
 import { Habits } from "./pages/Habits";
 import { Learning } from "./pages/Learning";
 import { AzureJobs } from "./pages/AzureJobs";
+import { Outreach } from "./pages/Outreach";
+import { Chess } from "./pages/Chess";
 import { Login } from "./pages/Login";
 import { UsageWidget } from "./components/UsageWidget";
 import { api } from "./api";
@@ -33,6 +35,8 @@ export default function App() {
         <Route path="/habits" element={<Habits />} />
         <Route path="/learning" element={<Learning />} />
         <Route path="/azure-jobs" element={<AzureJobs />} />
+        <Route path="/outreach" element={<Outreach />} />
+        <Route path="/chess" element={<Chess />} />
       </Routes>
       <UsageWidget />
     </div>

@@ -1,0 +1,208 @@
+import { Router } from "express";
+import { RestError } from "@azure/data-tables";
+import { getOutreachTable, isConfigured as isTableConfigured } from "../azureTables.js";
+import { isConfigured as isMailConfigured, sendMail } from "../mailer.js";
+
+export const outreachRouter = Router();
+
+const PARTITION_KEY = "draft";
+
+type DraftStatus = "pending_review" | "sending" | "sent" | "rejected";
+const VALID_STATUSES: DraftStatus[] = ["pending_review", "sending", "sent", "rejected"];
+
+interface DraftEntity {
+  partitionKey: string;
+  rowKey: string;
+  companyName: string;
+  companyDomain: string;
+  companyCountry: string;
+  employeeCount?: number;
+  contactName?: string;
+  contactTitle?: string;
+  contactEmail: string;
+  researchSummary: string;
+  emailSubject: string;
+  emailBody: string;
+  status: DraftStatus;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  source: string;
+  etag?: string;
+}
+
+function isNotFound(err: unknown): boolean {
+  return err instanceof RestError && err.statusCode === 404;
+}
+
+function isPreconditionFailed(err: unknown): boolean {
+  return err instanceof RestError && err.statusCode === 412;
+}
+
+outreachRouter.get("/", async (req, res) => {
+  if (!isTableConfigured()) {
+    res.json({ configured: false, drafts: [] });
+    return;
+  }
+
+  // status comes from the query string, so it must be checked against a fixed
+  // allowlist before going into the OData filter string below — building the
+  // filter from an unvalidated value would let a caller inject arbitrary
+  // OData and read rows outside the intended status.
+  const rawStatus = typeof req.query.status === "string" ? req.query.status : "pending_review";
+  if (!VALID_STATUSES.includes(rawStatus as DraftStatus)) {
+    res.status(400).json({ configured: true, error: `status must be one of: ${VALID_STATUSES.join(", ")}`, drafts: [] });
+    return;
+  }
+  const status: DraftStatus = rawStatus as DraftStatus;
+
+  try {
+    const table = getOutreachTable();
+    const drafts: DraftEntity[] = [];
+    for await (const entity of table.listEntities<DraftEntity>({
+      queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}' and status eq '${status}'` },
+    })) {
+      drafts.push(entity);
+    }
+    drafts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json({ configured: true, drafts });
+  } catch (err) {
+    console.error("Failed to list outreach drafts:", err);
+    res.status(502).json({ configured: true, error: "table_fetch_failed", drafts: [] });
+  }
+});
+
+outreachRouter.patch("/:id", async (req, res) => {
+  if (!isTableConfigured()) {
+    res.status(503).json({ success: false, error: "storage_not_configured" });
+    return;
+  }
+
+  const { emailSubject, emailBody } = req.body as { emailSubject?: string; emailBody?: string };
+  if (emailSubject === undefined && emailBody === undefined) {
+    res.status(400).json({ success: false, error: "emailSubject or emailBody is required" });
+    return;
+  }
+
+  try {
+    const table = getOutreachTable();
+    const existing = await table.getEntity<DraftEntity>(PARTITION_KEY, req.params.id);
+    if (existing.status === "sent") {
+      res.status(409).json({ success: false, error: "cannot edit a draft that has already been sent" });
+      return;
+    }
+
+    await table.updateEntity(
+      {
+        partitionKey: PARTITION_KEY,
+        rowKey: req.params.id,
+        ...(emailSubject !== undefined ? { emailSubject } : {}),
+        ...(emailBody !== undefined ? { emailBody } : {}),
+        updatedAt: new Date().toISOString(),
+      },
+      "Merge"
+    );
+    res.json({ success: true });
+  } catch (err) {
+    if (isNotFound(err)) {
+      res.status(404).json({ success: false, error: "draft_not_found" });
+      return;
+    }
+    console.error(`Failed to update outreach draft "${req.params.id}":`, err);
+    res.status(502).json({ success: false, error: "table_update_failed" });
+  }
+});
+
+outreachRouter.post("/:id/approve", async (req, res) => {
+  if (!isTableConfigured()) {
+    res.status(503).json({ success: false, error: "storage_not_configured" });
+    return;
+  }
+  if (!isMailConfigured()) {
+    res.status(503).json({ success: false, error: "mail_not_configured" });
+    return;
+  }
+
+  const table = getOutreachTable();
+
+  try {
+    const entity = await table.getEntity<DraftEntity>(PARTITION_KEY, req.params.id);
+    if (entity.status !== "pending_review") {
+      res.status(409).json({ success: false, error: `draft is already "${entity.status}"` });
+      return;
+    }
+
+    // Claim the draft with an etag-conditional update before sending anything.
+    // Without this, two near-simultaneous approve clicks (or a client retry)
+    // could both pass the status check above and each send a duplicate email —
+    // the etag match makes only one of them win the claim.
+    try {
+      await table.updateEntity(
+        { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "sending", updatedAt: new Date().toISOString() },
+        "Merge",
+        { etag: entity.etag }
+      );
+    } catch (claimErr) {
+      if (isPreconditionFailed(claimErr)) {
+        res.status(409).json({ success: false, error: "draft was just modified elsewhere — refresh and try again" });
+        return;
+      }
+      throw claimErr;
+    }
+
+    try {
+      await sendMail({ to: entity.contactEmail, subject: entity.emailSubject, text: entity.emailBody });
+    } catch (sendErr) {
+      // Sending failed — release the claim so the draft is retryable instead of stuck in "sending".
+      await table.updateEntity(
+        { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "pending_review", updatedAt: new Date().toISOString() },
+        "Merge"
+      );
+      throw sendErr;
+    }
+
+    const now = new Date().toISOString();
+    await table.updateEntity(
+      { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "sent", sentAt: now, updatedAt: now },
+      "Merge"
+    );
+    res.json({ success: true });
+  } catch (err) {
+    if (isNotFound(err)) {
+      res.status(404).json({ success: false, error: "draft_not_found" });
+      return;
+    }
+    console.error(`Failed to approve/send outreach draft "${req.params.id}":`, err);
+    res.status(502).json({ success: false, error: "send_failed" });
+  }
+});
+
+outreachRouter.post("/:id/reject", async (req, res) => {
+  if (!isTableConfigured()) {
+    res.status(503).json({ success: false, error: "storage_not_configured" });
+    return;
+  }
+
+  try {
+    const table = getOutreachTable();
+    const existing = await table.getEntity<DraftEntity>(PARTITION_KEY, req.params.id);
+    if (existing.status !== "pending_review") {
+      res.status(409).json({ success: false, error: `draft is already "${existing.status}"` });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await table.updateEntity(
+      { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "rejected", updatedAt: now },
+      "Merge"
+    );
+    res.json({ success: true });
+  } catch (err) {
+    if (isNotFound(err)) {
+      res.status(404).json({ success: false, error: "draft_not_found" });
+      return;
+    }
+    console.error(`Failed to reject outreach draft "${req.params.id}":`, err);
+    res.status(502).json({ success: false, error: "table_update_failed" });
+  }
+});

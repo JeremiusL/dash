@@ -119,12 +119,83 @@ export interface AzureJobsSummary {
   error?: string;
 }
 
+export interface AzureResourceCost {
+  name: string;
+  cost: number;
+}
+
+export interface AzureCreditSummary {
+  currency: string;
+  total: number;
+  spent: number;
+  remaining: number;
+  percentUsed: number;
+  startDate: string;
+  expiresAt: string;
+  daysRemaining: number;
+}
+
+export interface AzureCostSummary {
+  configured: boolean;
+  currency?: string;
+  monthToDateCost?: number;
+  byResource?: AzureResourceCost[];
+  credit?: AzureCreditSummary | null;
+  error?: string;
+  creditError?: string;
+}
+
+export interface OutreachDraft {
+  partitionKey: string;
+  rowKey: string;
+  companyName: string;
+  companyDomain: string;
+  companyCountry: string;
+  employeeCount?: number;
+  contactName?: string;
+  contactTitle?: string;
+  contactEmail: string;
+  researchSummary: string;
+  emailSubject: string;
+  emailBody: string;
+  status: "pending_review" | "sending" | "sent" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  source: string;
+}
+
+export interface OutreachDraftsSummary {
+  configured: boolean;
+  drafts: OutreachDraft[];
+  error?: string;
+}
+
 export interface AccountUsage {
   loggedIn: true;
   planName: string | null;
   session: { percent: number; resetsAt: string } | null;
   weekly: { percent: number; resetsAt: string } | null;
   credits: { enabled: boolean; percent: number; used: number; limit: number; currency: string } | null;
+}
+
+export interface ChessDayRecord {
+  completedAt: string;
+  exerciseType: string;
+  accuracyPct: number | null;
+  timeSpentSec: number;
+}
+
+export interface ChessProgress {
+  linkedHabitId: string | null;
+  startDate: string | null;
+  cycle: number;
+  cycleLength: number;
+  days: Record<number, ChessDayRecord>;
+  todayDayNumber: number;
+  todayCompleted: boolean;
+  streak: number;
+  cycleFinished: boolean;
 }
 
 export const api = {
@@ -191,6 +262,7 @@ export const api = {
   },
   jobs: {
     list: () => request<AzureJobsSummary>("/jobs"),
+    costs: () => request<AzureCostSummary>("/jobs/costs"),
     start: (name: string) =>
       request<{ started: boolean; executionName: string | null }>(`/jobs/${encodeURIComponent(name)}/start`, {
         method: "POST",
@@ -228,5 +300,26 @@ export const api = {
         error?: string;
       }>;
     },
+  },
+  outreach: {
+    list: (status?: string) =>
+      request<OutreachDraftsSummary>(`/outreach${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+    update: (id: string, data: { emailSubject?: string; emailBody?: string }) =>
+      request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    approve: (id: string) =>
+      request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}/approve`, { method: "POST" }),
+    reject: (id: string) =>
+      request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}/reject`, { method: "POST" }),
+  },
+  chess: {
+    state: () => request<ChessProgress>("/chess/state"),
+    linkHabit: (habitId: string) =>
+      request<ChessProgress>("/chess/link-habit", { method: "POST", body: JSON.stringify({ habitId }) }),
+    complete: (data: { day: number; exerciseType: string; accuracyPct: number | null; timeSpentSec: number }) =>
+      request<ChessProgress>("/chess/complete", { method: "POST", body: JSON.stringify(data) }),
+    extend: () => request<ChessProgress>("/chess/extend", { method: "POST" }),
   },
 };

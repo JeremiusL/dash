@@ -11,6 +11,8 @@
   --accent-learning: #c9760f;
   --accent-usage: #7c3aed;
   --accent-jobs: #0f766e;
+  --accent-outreach: #be123c;
+  --accent-chess: #4a3aa7;
   --accent-google: #1a73c7;
   --accent-apple: #4a4a4f;
   --danger: #c53c56;
@@ -447,6 +449,28 @@ h3 {
   color: var(--accent-calendar);
 }
 
+.cost-total {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.cost-bar-track {
+  width: 100%;
+  height: 14px;
+  background: var(--panel-raised);
+  border: 2px solid var(--ink);
+  margin-bottom: 8px;
+}
+
+.cost-bar-fill {
+  height: 100%;
+  background: var(--accent-jobs);
+}
+
+.cost-bar-fill--over {
+  background: var(--danger);
+}
+
 .checkbox-pixel {
   width: 22px;
   height: 22px;
@@ -830,4 +854,199 @@ h3 {
   color: var(--ink-dim);
   margin-bottom: 12px;
   line-height: 1.6;
+}
+
+/* ---- chess visualization trainer ---- */
+
+.chess-runner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chess-runner-header {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.chess-runner-title {
+  font-size: 13px;
+  color: var(--accent-chess);
+}
+
+.chess-timer {
+  font-size: 11px;
+  color: var(--ink-dim);
+  border: 2px solid var(--ink-dim);
+  padding: 6px 10px;
+}
+
+.chess-timer--over {
+  color: var(--accent-chess);
+  border-color: var(--accent-chess);
+}
+
+.chess-instructions {
+  color: var(--ink-dim);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.chess-drill {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.chess-drill-progress {
+  font-size: 10px;
+  color: var(--ink-dim);
+}
+
+.chess-square-prompt {
+  font-size: 28px;
+  color: var(--accent-chess);
+}
+
+.chess-timer-bar {
+  width: 100%;
+  max-width: 260px;
+  height: 8px;
+  background: var(--panel-raised);
+  border: 2px solid var(--ink);
+}
+
+.chess-timer-bar-fill {
+  height: 100%;
+  background: var(--accent-chess);
+}
+
+.chess-feedback-right {
+  color: #1baf7a;
+  font-size: 11px;
+}
+
+.chess-feedback-wrong {
+  color: var(--danger);
+  font-size: 11px;
+}
+
+.chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(28px, 44px));
+  grid-template-rows: repeat(8, minmax(28px, 44px));
+  border: 4px solid var(--ink);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.chess-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  padding: 0;
+  font-size: 20px;
+  cursor: default;
+  position: relative;
+}
+
+.chess-square--light {
+  background: var(--panel);
+}
+
+.chess-square--dark {
+  background: var(--panel-raised);
+}
+
+.chess-square--clickable {
+  cursor: pointer;
+}
+
+.chess-square--clickable:hover {
+  outline: 2px solid var(--accent-chess);
+  outline-offset: -2px;
+}
+
+.chess-square--selected {
+  box-shadow: inset 0 0 0 3px var(--accent-chess);
+}
+
+.chess-square--highlight {
+  box-shadow: inset 0 0 0 3px #1baf7a;
+}
+
+.chess-piece {
+  line-height: 1;
+}
+
+.chess-marker {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 7px;
+  color: var(--ink-dim);
+}
+
+.chess-tour-list {
+  font-size: 11px;
+  color: var(--ink-dim);
+  line-height: 1.8;
+  padding-left: 18px;
+}
+
+.chess-notation-line {
+  font-size: 12px;
+  line-height: 2;
+  color: var(--ink);
+  word-spacing: 4px;
+}
+
+.chess-mc-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chess-piece-palette {
+  flex-wrap: wrap;
+}
+
+.chess-day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 6px;
+}
+
+.chess-day-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  font-size: 10px;
+  border: 2px solid var(--ink-dim);
+  color: var(--ink-dim);
+}
+
+.chess-day-cell--done {
+  background: var(--accent-chess);
+  border-color: var(--accent-chess);
+  color: var(--panel);
+}
+
+.chess-day-cell--today {
+  border-color: var(--accent-chess);
+  color: var(--accent-chess);
+  font-weight: bold;
+}
+
+.chess-day-cell--missed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.chess-day-cell--locked {
+  border-style: dashed;
+  opacity: 0.5;
 }

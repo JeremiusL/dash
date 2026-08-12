@@ -23,7 +23,13 @@ const AGENT_BUCKETS: Record<string, string> = {
 
 // Backend .env vars agents are allowed to request as secrets, so a deployed
 // container can e.g. send email without the browser ever seeing the password.
-const ALLOWED_JOB_SECRET_ENV = ["GMAIL_USER", "GMAIL_APP_PASSWORD"];
+const ALLOWED_JOB_SECRET_ENV = [
+  "GMAIL_USER",
+  "GMAIL_APP_PASSWORD",
+  "AZURE_STORAGE_CONNECTION_STRING",
+  "ANTHROPIC_API_KEY",
+  "APOLLO_API_KEY",
+];
 
 function slugify(name: string): string {
   return name

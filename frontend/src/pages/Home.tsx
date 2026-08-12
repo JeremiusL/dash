@@ -3,12 +3,24 @@ import { useSearchParams } from "react-router-dom";
 import { Tile } from "../components/Tile";
 import { WeekGrid } from "../components/WeekGrid";
 import { api } from "../api";
-import type { AzureJob, CalendarEvent, CalendarStatus, Habit, LinkItem, NoteItem, ReadingItem } from "../api";
+import type {
+  AzureJob,
+  CalendarEvent,
+  CalendarStatus,
+  ChessProgress,
+  Habit,
+  LinkItem,
+  NoteItem,
+  OutreachDraft,
+  ReadingItem,
+} from "../api";
 
 export function Home() {
   const [habits, setHabits] = useState<Habit[] | null>(null);
   const [azureConfigured, setAzureConfigured] = useState<boolean | null>(null);
   const [azureJobs, setAzureJobs] = useState<AzureJob[] | null>(null);
+  const [outreachConfigured, setOutreachConfigured] = useState<boolean | null>(null);
+  const [outreachDrafts, setOutreachDrafts] = useState<OutreachDraft[] | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [weekStart, setWeekStart] = useState<string | null>(null);
@@ -17,6 +29,7 @@ export function Home() {
   const [links, setLinks] = useState<LinkItem[] | null>(null);
   const [notes, setNotes] = useState<NoteItem[] | null>(null);
   const [reading, setReading] = useState<ReadingItem[] | null>(null);
+  const [chess, setChess] = useState<ChessProgress | null>(null);
   const [params] = useSearchParams();
 
   useEffect(() => {
@@ -24,6 +37,7 @@ export function Home() {
     api.learning.links.list().then(setLinks).catch(() => setLinks([]));
     api.learning.notes.list().then(setNotes).catch(() => setNotes([]));
     api.learning.readingList.list().then(setReading).catch(() => setReading([]));
+    api.chess.state().then(setChess).catch(() => setChess(null));
     api.jobs
       .list()
       .then((summary) => {
@@ -33,6 +47,16 @@ export function Home() {
       .catch(() => {
         setAzureConfigured(false);
         setAzureJobs([]);
+      });
+    api.outreach
+      .list("pending_review")
+      .then((summary) => {
+        setOutreachConfigured(summary.configured);
+        setOutreachDrafts(summary.drafts);
+      })
+      .catch(() => {
+        setOutreachConfigured(false);
+        setOutreachDrafts([]);
       });
 
     Promise.all([api.calendar.status(), api.calendar.events()])
@@ -171,6 +195,32 @@ export function Home() {
               {azureJobs.length} job{azureJobs.length === 1 ? "" : "s"}
               <br />
               {azureJobs.filter((j) => j.status.toLowerCase() === "failed").length} failed
+            </>
+          )}
+        </Tile>
+
+        <Tile to="/outreach" label="Outreach" accent="var(--accent-outreach)" cta="Review drafts">
+          {outreachConfigured === null || outreachDrafts === null ? (
+            "loading..."
+          ) : !outreachConfigured ? (
+            "Not configured. Click to see setup steps."
+          ) : outreachDrafts.length === 0 ? (
+            "No drafts waiting for review."
+          ) : (
+            <>
+              {outreachDrafts.length} draft{outreachDrafts.length === 1 ? "" : "s"} waiting for review
+            </>
+          )}
+        </Tile>
+
+        <Tile to="/chess" label="Chess Training" accent="var(--accent-chess)" cta="Train now">
+          {chess === null ? (
+            "loading..."
+          ) : (
+            <>
+              Day {chess.todayDayNumber} of {chess.cycle * chess.cycleLength}
+              <br />
+              {chess.todayCompleted ? "today's session done" : "today's session not started"} · {chess.streak} day streak
             </>
           )}
         </Tile>

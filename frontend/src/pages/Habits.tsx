@@ -8,6 +8,7 @@ export function Habits() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [chessLinkedHabitId, setChessLinkedHabitId] = useState<string | null>(null);
 
   function refresh() {
     return api.habits.list().then(setHabits);
@@ -15,6 +16,7 @@ export function Habits() {
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
+    api.chess.state().then((s) => setChessLinkedHabitId(s.linkedHabitId)).catch(() => {});
   }, []);
 
   async function addHabit(e: React.FormEvent) {
@@ -62,25 +64,41 @@ export function Habits() {
         <p className="muted">No habits yet. Add your first one above.</p>
       ) : (
         <ul className="list">
-          {habits.map((h) => (
-            <li key={h.id} className="list-item">
-              <div className="row">
-                <span
-                  className={`checkbox-pixel ${h.completedToday ? "checked" : ""}`}
-                  onClick={() => toggle(h.id)}
-                  role="button"
-                  aria-label={`toggle ${h.name} for today`}
-                />
-                <span>{h.name}</span>
-              </div>
-              <div className="row">
-                <span className="streak-badge">{h.streak} day streak</span>
-                <button className="pixel-btn pixel-btn--danger" onClick={() => remove(h.id)}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
+          {habits.map((h) => {
+            const isChessLinked = h.id === chessLinkedHabitId;
+            return (
+              <li key={h.id} className="list-item">
+                <div className="row">
+                  {isChessLinked ? (
+                    <span
+                      className={`checkbox-pixel ${h.completedToday ? "checked" : ""}`}
+                      aria-label={`${h.name} is driven by Chess Training`}
+                      title="Driven by Chess Training — complete today's session to check this off"
+                    />
+                  ) : (
+                    <span
+                      className={`checkbox-pixel ${h.completedToday ? "checked" : ""}`}
+                      onClick={() => toggle(h.id)}
+                      role="button"
+                      aria-label={`toggle ${h.name} for today`}
+                    />
+                  )}
+                  <span>{h.name}</span>
+                  {isChessLinked && (
+                    <Link to="/chess" className="muted">
+                      🔗 driven by Chess Training →
+                    </Link>
+                  )}
+                </div>
+                <div className="row">
+                  <span className="streak-badge">{h.streak} day streak</span>
+                  <button className="pixel-btn pixel-btn--danger" onClick={() => remove(h.id)}>
+                    Delete
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 

@@ -1,0 +1,25 @@
+{
+  "linkedHabitId": "msgak9g8mcjdyo",
+  "startDate": "2026-08-06",
+  "cycle": 1,
+  "days": {
+    "1": {
+      "completedAt": "2026-08-06T19:22:07.304Z",
+      "exerciseType": "square-color",
+      "accuracyPct": 68,
+      "timeSpentSec": 128
+    },
+    "6": {
+      "completedAt": "2026-08-11T18:13:02.986Z",
+      "exerciseType": "line-attack",
+      "accuracyPct": 98,
+      "timeSpentSec": 303
+    },
+    "7": {
+      "completedAt": "2026-08-12T08:38:29.306Z",
+      "exerciseType": "square-color",
+      "accuracyPct": 64,
+      "timeSpentSec": 132
+    }
+  }
+}
