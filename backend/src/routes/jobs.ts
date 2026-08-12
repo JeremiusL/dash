@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getClient, isConfigured, resourceGroup } from "../azure.js";
+import { getCostSummary, getCreditSummary } from "../azureCost.js";
 
 export const jobsRouter = Router();
 
@@ -56,6 +57,31 @@ jobsRouter.get("/", async (_req, res) => {
     console.error("Failed to fetch Azure Container Apps jobs:", err);
     res.status(502).json({ configured: true, error: "azure_fetch_failed", jobs: [] });
   }
+});
+
+jobsRouter.get("/costs", async (_req, res) => {
+  if (!isConfigured()) {
+    res.json({ configured: false });
+    return;
+  }
+
+  const response: Record<string, unknown> = { configured: true };
+
+  try {
+    Object.assign(response, await getCostSummary(process.env.AZURE_SUBSCRIPTION_ID!, resourceGroup()));
+  } catch (err) {
+    console.error("Failed to fetch Azure resource-group cost data:", err);
+    response.error = "azure_cost_fetch_failed";
+  }
+
+  try {
+    response.credit = await getCreditSummary(process.env.AZURE_SUBSCRIPTION_ID!);
+  } catch (err) {
+    console.error("Failed to fetch Azure credit balance:", err);
+    response.creditError = "azure_credit_fetch_failed";
+  }
+
+  res.json(response);
 });
 
 jobsRouter.post("/:name/start", async (req, res) => {

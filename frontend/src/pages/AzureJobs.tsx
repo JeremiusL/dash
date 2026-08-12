@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import type { AzureJob } from "../api";
+import type { AzureCostSummary, AzureJob } from "../api";
 
 function badgeVariant(status: string): string {
   const s = status.toLowerCase();
@@ -15,11 +15,70 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`status-badge status-badge--${badgeVariant(status)}`}>{status}</span>;
 }
 
+function formatMoney(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency}`;
+  }
+}
+
+function CostPanel({ costs }: { costs: AzureCostSummary }) {
+  const currency = costs.currency ?? costs.credit?.currency ?? "USD";
+
+  return (
+    <div className="pixel-panel section">
+      <h2>Azure spend</h2>
+
+      {costs.credit ? (
+        <>
+          <p className="cost-total">
+            {formatMoney(costs.credit.remaining, costs.credit.currency)}{" "}
+            <span className="muted">of {formatMoney(costs.credit.total, costs.credit.currency)} credit remaining</span>
+          </p>
+          <div className="cost-bar-track">
+            <div
+              className={`cost-bar-fill ${costs.credit.percentUsed >= 100 ? "cost-bar-fill--over" : ""}`}
+              style={{ width: `${Math.min(100, Math.max(0, costs.credit.percentUsed))}%` }}
+            />
+          </div>
+          <p className="muted">
+            {formatMoney(costs.credit.spent, costs.credit.currency)} spent since{" "}
+            {new Date(costs.credit.startDate).toLocaleDateString()} ({Math.round(costs.credit.percentUsed)}%) &middot;{" "}
+            {costs.credit.daysRemaining} day{costs.credit.daysRemaining === 1 ? "" : "s"} left before it expires (
+            {new Date(costs.credit.expiresAt).toLocaleDateString()})
+          </p>
+        </>
+      ) : costs.creditError ? (
+        <p className="muted">
+          Couldn't load credit balance: {costs.creditError}. Make sure the service principal has the "Cost Management
+          Reader" role at subscription scope (see backend/.env.example).
+        </p>
+      ) : (
+        <p className="muted">
+          Set AZURE_CREDIT_START_DATE in backend/.env to track remaining credit (e.g. for Azure for Students).
+        </p>
+      )}
+
+      {costs.error ? (
+        <p className="muted">
+          Couldn't load resource group spend: {costs.error}.
+        </p>
+      ) : costs.monthToDateCost != null ? (
+        <p className="muted">
+          {formatMoney(costs.monthToDateCost, currency)} spent in this resource group this month.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function AzureJobs() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [jobs, setJobs] = useState<AzureJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [costs, setCosts] = useState<AzureCostSummary | null>(null);
   const [starting, setStarting] = useState<string | null>(null);
   const [startError, setStartError] = useState<{ job: string; message: string } | null>(null);
 
@@ -44,6 +103,10 @@ export function AzureJobs() {
 
   function refresh() {
     setError(null);
+    api.jobs
+      .costs()
+      .then(setCosts)
+      .catch((err) => setCosts({ configured: true, error: err instanceof Error ? err.message : "failed to load costs" }));
     return api.jobs
       .list()
       .then((summary) => {
@@ -178,6 +241,8 @@ export function AzureJobs() {
         <>
           {error && <p className="muted">error: {error}</p>}
 
+          {costs && <CostPanel costs={costs} />}
+
           <div className="pixel-panel section">
             <h2>Create agent from files</h2>
             <p className="muted">
@@ -281,27 +346,31 @@ export function AzureJobs() {
             <p className="muted">No Container Apps Jobs found in this resource group.</p>
           ) : (
             <ul className="list">
-              {jobs.map((job) => (
-                <li key={job.name} className="list-item">
-                  <div>
-                    <div>{job.name}</div>
-                    <div className="muted">
-                      {job.lastRunTime ? new Date(job.lastRunTime).toLocaleString() : "never run"}
+              {jobs.map((job) => {
+                const jobCost = costs?.byResource?.find((r) => r.name === job.name);
+                return (
+                  <li key={job.name} className="list-item">
+                    <div>
+                      <div>{job.name}</div>
+                      <div className="muted">
+                        {job.lastRunTime ? new Date(job.lastRunTime).toLocaleString() : "never run"}
+                        {jobCost && ` · ${formatMoney(jobCost.cost, costs?.currency ?? "USD")} this month`}
+                      </div>
+                      {startError?.job === job.name && <div className="muted">error: {startError.message}</div>}
                     </div>
-                    {startError?.job === job.name && <div className="muted">error: {startError.message}</div>}
-                  </div>
-                  <div className="row">
-                    <StatusBadge status={job.status} />
-                    <button
-                      className="pixel-btn"
-                      disabled={starting === job.name}
-                      onClick={() => runNow(job.name)}
-                    >
-                      {starting === job.name ? "Starting..." : "Run now"}
-                    </button>
-                  </div>
-                </li>
-              ))}
+                    <div className="row">
+                      <StatusBadge status={job.status} />
+                      <button
+                        className="pixel-btn"
+                        disabled={starting === job.name}
+                        onClick={() => runNow(job.name)}
+                      >
+                        {starting === job.name ? "Starting..." : "Run now"}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>

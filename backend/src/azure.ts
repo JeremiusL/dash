@@ -12,15 +12,22 @@ export function isConfigured(): boolean {
 }
 
 let client: ContainerAppsAPIClient | null = null;
+let credential: ClientSecretCredential | null = null;
 
-export function getClient(): ContainerAppsAPIClient {
-  if (!client) {
-    const credential = new ClientSecretCredential(
+export function getCredential(): ClientSecretCredential {
+  if (!credential) {
+    credential = new ClientSecretCredential(
       process.env.AZURE_TENANT_ID!,
       process.env.AZURE_CLIENT_ID!,
       process.env.AZURE_CLIENT_SECRET!
     );
-    client = new ContainerAppsAPIClient(credential, process.env.AZURE_SUBSCRIPTION_ID!);
+  }
+  return credential;
+}
+
+export function getClient(): ContainerAppsAPIClient {
+  if (!client) {
+    client = new ContainerAppsAPIClient(getCredential(), process.env.AZURE_SUBSCRIPTION_ID!);
   }
   return client;
 }
