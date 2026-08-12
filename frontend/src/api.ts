@@ -1,4 +1,59 @@
+// Local read-through cache so a page reload doesn't refetch every GET immediately.
+// Entries expire after CACHE_TTL_MS, and any mutating request (POST/PUT/PATCH/DELETE)
+// wipes the whole cache so writes are always reflected right away.
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_PREFIX = "dash-cache:";
+// Auth state must never be served stale.
+const UNCACHEABLE_PREFIXES = ["/auth/"];
+
+interface CacheEntry<T> {
+  data: T;
+  savedAt: number;
+}
+
+function readCache<T>(path: string): T | undefined {
+  try {
+    const raw = sessionStorage.getItem(CACHE_PREFIX + path);
+    if (!raw) return undefined;
+    const entry = JSON.parse(raw) as CacheEntry<T>;
+    if (Date.now() - entry.savedAt > CACHE_TTL_MS) {
+      sessionStorage.removeItem(CACHE_PREFIX + path);
+      return undefined;
+    }
+    return entry.data;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCache<T>(path: string, data: T) {
+  try {
+    sessionStorage.setItem(CACHE_PREFIX + path, JSON.stringify({ data, savedAt: Date.now() } satisfies CacheEntry<T>));
+  } catch {
+    // storage unavailable/full — fine, just skip caching
+  }
+}
+
+export function clearApiCache() {
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(CACHE_PREFIX)) sessionStorage.removeItem(key);
+    }
+  } catch {
+    // ignore
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = (options?.method ?? "GET").toUpperCase();
+  const cacheable = method === "GET" && !UNCACHEABLE_PREFIXES.some((p) => path.startsWith(p));
+
+  if (cacheable) {
+    const cached = readCache<T>(path);
+    if (cached !== undefined) return cached;
+  }
+
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -8,8 +63,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Request failed: ${res.status}`);
   }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  const data = res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+
+  if (cacheable) {
+    writeCache(path, data);
+  } else if (method !== "GET") {
+    clearApiCache();
+  }
+
+  return data;
 }
 
 export interface Habit {
@@ -234,6 +296,7 @@ export const api = {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error ?? `Request failed: ${res.status}`);
         }
+        clearApiCache();
         return res.json() as Promise<NoteItem>;
       },
       pdfUrl: (id: string) => `/api/learning/notes/${id}/pdf`,
@@ -290,6 +353,7 @@ export const api = {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `Request failed: ${res.status}`);
       }
+      clearApiCache();
       return res.json() as Promise<{
         success: boolean;
         repo?: string;
