@@ -3,30 +3,58 @@
     "id": "msgajwrzvimqe3",
     "name": "Driving",
     "createdAt": "2026-08-05T16:18:19.439Z",
-    "completions": ["2026-08-05"]
+    "completions": [
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-07",
+      "2026-08-11",
+      "2026-08-12"
+    ]
   },
   {
     "id": "msgak1k66wshiv",
     "name": "Sport",
     "createdAt": "2026-08-05T16:18:25.638Z",
-    "completions": ["2026-08-05"]
+    "completions": [
+      "2026-08-05",
+      "2026-08-06"
+    ]
   },
   {
     "id": "msgak4ed0ggd0l",
     "name": "X Post",
     "createdAt": "2026-08-05T16:18:29.317Z",
-    "completions": ["2026-08-05"]
+    "completions": [
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-11",
+      "2026-08-12"
+    ]
   },
   {
     "id": "msgak8bthcwwpo",
     "name": "Morning Walk",
     "createdAt": "2026-08-05T16:18:34.409Z",
-    "completions": ["2026-08-05"]
+    "completions": [
+      "2026-08-05",
+      "2026-08-06"
+    ]
   },
   {
     "id": "msgak9g8mcjdyo",
     "name": "Chess",
     "createdAt": "2026-08-05T16:18:35.864Z",
-    "completions": ["2026-08-05"]
+    "completions": [
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-11",
+      "2026-08-12"
+    ]
+  },
+  {
+    "id": "msozaz4j7maznd",
+    "name": "Reach out to clients",
+    "createdAt": "2026-08-11T18:13:22.387Z",
+    "completions": []
   }
 ]
