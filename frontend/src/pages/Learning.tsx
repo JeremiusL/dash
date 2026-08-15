@@ -108,6 +108,10 @@ function NotesTab() {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editTopic, setEditTopic] = useState("");
+  const [editBody, setEditBody] = useState("");
 
   function clearFile() {
     setFile(null);
@@ -147,6 +151,24 @@ function NotesTab() {
 
   async function remove(id: string) {
     await api.learning.notes.remove(id);
+    await refresh();
+  }
+
+  function startEdit(n: NoteItem) {
+    setEditingId(n.id);
+    setEditTitle(n.title);
+    setEditTopic(n.topic);
+    setEditBody(n.body);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function saveEdit(id: string) {
+    if (!editTitle.trim()) return;
+    await api.learning.notes.update(id, { title: editTitle.trim(), topic: editTopic.trim(), body: editBody });
+    setEditingId(null);
     await refresh();
   }
 
@@ -191,25 +213,65 @@ function NotesTab() {
         <p className="muted">No notes yet.</p>
       ) : (
         <ul className="list">
-          {notes.map((n) => (
-            <li key={n.id} className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
-              <div className="row" style={{ width: "100%", justifyContent: "space-between" }}>
-                <strong>{n.title}</strong>
-                <button className="pixel-btn pixel-btn--danger" onClick={() => remove(n.id)}>
-                  Delete
-                </button>
-              </div>
-              {n.body && <p style={{ margin: "8px 0 0" }}>{n.body}</p>}
-              {n.pdf && (
-                <p style={{ margin: "8px 0 0" }}>
-                  <a href={api.learning.notes.pdfUrl(n.id)} target="_blank" rel="noreferrer">
-                    📄 {n.pdf.fileName}
-                  </a>
-                </p>
-              )}
-              <div className="muted">{n.topic}</div>
-            </li>
-          ))}
+          {notes.map((n) =>
+            editingId === n.id ? (
+              <li key={n.id} className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                <div className="row" style={{ width: "100%", marginBottom: 10 }}>
+                  <input
+                    className="pixel-input"
+                    placeholder="title"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
+                  <input
+                    className="pixel-input"
+                    placeholder="topic (optional)"
+                    value={editTopic}
+                    onChange={(e) => setEditTopic(e.target.value)}
+                  />
+                </div>
+                <textarea
+                  className="pixel-textarea"
+                  placeholder="note body"
+                  rows={4}
+                  style={{ width: "100%", marginBottom: 10 }}
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                />
+                <div className="row">
+                  <button className="pixel-btn" onClick={() => saveEdit(n.id)}>
+                    Save
+                  </button>
+                  <button className="pixel-btn" onClick={cancelEdit}>
+                    Cancel
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li key={n.id} className="list-item" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                <div className="row" style={{ width: "100%", justifyContent: "space-between" }}>
+                  <strong>{n.title}</strong>
+                  <div className="row">
+                    <button className="pixel-btn" onClick={() => startEdit(n)}>
+                      Edit
+                    </button>
+                    <button className="pixel-btn pixel-btn--danger" onClick={() => remove(n.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                {n.body && <p style={{ margin: "8px 0 0" }}>{n.body}</p>}
+                {n.pdf && (
+                  <p style={{ margin: "8px 0 0" }}>
+                    <a href={api.learning.notes.pdfUrl(n.id)} target="_blank" rel="noreferrer">
+                      📄 {n.pdf.fileName}
+                    </a>
+                  </p>
+                )}
+                <div className="muted">{n.topic}</div>
+              </li>
+            )
+          )}
         </ul>
       )}
     </div>
