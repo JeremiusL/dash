@@ -220,6 +220,8 @@ export interface OutreachDraft {
   researchSummary: string;
   emailSubject: string;
   emailBody: string;
+  templateId?: string;
+  templateLabel?: string;
   status: "pending_review" | "drafting" | "drafted" | "sent" | "rejected";
   createdAt: string;
   updatedAt: string;
@@ -231,6 +233,23 @@ export interface OutreachDraftsSummary {
   configured: boolean;
   drafts: OutreachDraft[];
   syncConfigured?: boolean;
+  error?: string;
+}
+
+export interface OutreachTemplate {
+  id: string;
+  label: string;
+  subject: string;
+  body: string;
+  weight: number;
+  active: boolean;
+  demoLink?: string;
+}
+
+export interface OutreachConfigSummary {
+  configured: boolean;
+  sicCodes: string[];
+  templates: OutreachTemplate[];
   error?: string;
 }
 
@@ -380,6 +399,19 @@ export const api = {
       request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}/reject`, { method: "POST" }),
     sync: () =>
       request<{ success: boolean; error?: string; output?: string }>(`/outreach/sync`, { method: "POST" }),
+  },
+  outreachConfig: {
+    get: () => request<OutreachConfigSummary>("/outreach-config"),
+    updateSicCodes: (sicCodes: string[]) =>
+      request<{ success: boolean; sicCodes?: string[]; error?: string }>("/outreach-config/sic-codes", {
+        method: "PUT",
+        body: JSON.stringify({ sicCodes }),
+      }),
+    updateTemplates: (templates: OutreachTemplate[]) =>
+      request<{ success: boolean; templates?: OutreachTemplate[]; error?: string }>("/outreach-config/templates", {
+        method: "PUT",
+        body: JSON.stringify({ templates }),
+      }),
   },
   chess: {
     state: () => request<ChessProgress>("/chess/state"),

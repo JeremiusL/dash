@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import type { OutreachDraft } from "../api";
+import { OutreachConfig } from "../components/OutreachConfig";
 
 export function Outreach() {
   const [configured, setConfigured] = useState<boolean | null>(null);
@@ -143,6 +144,13 @@ export function Outreach() {
 
           {syncResult && <p className="muted section">{syncResult}</p>}
 
+          <details className="section">
+            <summary style={{ cursor: "pointer" }}>Targeting &amp; templates</summary>
+            <div className="section">
+              <OutreachConfig />
+            </div>
+          </details>
+
           {drafts.length === 0 ? (
             <p className="muted">
               No drafts waiting for review. Run the lead-gen agent from Azure Jobs, or run{" "}
@@ -164,6 +172,7 @@ export function Outreach() {
                         {d.contactEmail}
                       </div>
                       <div className="muted">why: {d.researchSummary}</div>
+                      {d.templateLabel && <div className="muted">template: {d.templateLabel}</div>}
                     </div>
 
                     <input

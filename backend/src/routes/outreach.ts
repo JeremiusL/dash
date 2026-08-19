@@ -27,6 +27,8 @@ interface DraftEntity {
   researchSummary: string;
   emailSubject: string;
   emailBody: string;
+  templateId?: string;
+  templateLabel?: string;
   status: DraftStatus;
   createdAt: string;
   updatedAt: string;

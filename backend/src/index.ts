@@ -14,6 +14,7 @@ import { jobsRouter } from "./routes/jobs.js";
 import { deployRouter } from "./routes/deploy.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { outreachRouter } from "./routes/outreach.js";
+import { outreachConfigRouter } from "./routes/outreachConfig.js";
 import { chessRouter } from "./routes/chess.js";
 import { requireAuth } from "./middleware/auth.js";
 
@@ -39,6 +40,7 @@ app.use("/api/jobs", requireAuth, jobsRouter);
 app.use("/api/deploy", requireAuth, deployRouter);
 app.use("/api/dashboard", requireAuth, dashboardRouter);
 app.use("/api/outreach", requireAuth, outreachRouter);
+app.use("/api/outreach-config", requireAuth, outreachConfigRouter);
 app.use("/api/chess", requireAuth, chessRouter);
 
 // In production, this same server also serves the built frontend (frontend/dist),
