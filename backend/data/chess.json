@@ -20,6 +20,48 @@
       "exerciseType": "square-color",
       "accuracyPct": 64,
       "timeSpentSec": 132
+    },
+    "8": {
+      "completedAt": "2026-08-13T08:22:15.110Z",
+      "exerciseType": "piece-tracking",
+      "accuracyPct": 0,
+      "timeSpentSec": 35
+    },
+    "9": {
+      "completedAt": "2026-08-14T07:25:51.945Z",
+      "exerciseType": "piece-tracking",
+      "accuracyPct": 0,
+      "timeSpentSec": 38
+    },
+    "10": {
+      "completedAt": "2026-08-15T15:56:18.788Z",
+      "exerciseType": "piece-tracking",
+      "accuracyPct": 100,
+      "timeSpentSec": 47
+    },
+    "11": {
+      "completedAt": "2026-08-16T18:27:04.939Z",
+      "exerciseType": "piece-tracking",
+      "accuracyPct": 50,
+      "timeSpentSec": 47
+    },
+    "12": {
+      "completedAt": "2026-08-17T08:02:16.001Z",
+      "exerciseType": "position-recall",
+      "accuracyPct": 40,
+      "timeSpentSec": 34
+    },
+    "13": {
+      "completedAt": "2026-08-18T20:03:11.364Z",
+      "exerciseType": "position-recall",
+      "accuracyPct": 29,
+      "timeSpentSec": 28
+    },
+    "14": {
+      "completedAt": "2026-08-19T07:53:11.955Z",
+      "exerciseType": "piece-tracking",
+      "accuracyPct": 100,
+      "timeSpentSec": 58
     }
   }
 }

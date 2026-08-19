@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import { Router } from "express";
 import { RestError } from "@azure/data-tables";
 import { getOutreachTable, isConfigured as isTableConfigured } from "../azureTables.js";
@@ -39,9 +40,13 @@ function isPreconditionFailed(err: unknown): boolean {
   return err instanceof RestError && err.statusCode === 412;
 }
 
+function isSyncConfigured(): boolean {
+  return Boolean(process.env.OUTREACH_AGENT_DIR);
+}
+
 outreachRouter.get("/", async (req, res) => {
   if (!isTableConfigured()) {
-    res.json({ configured: false, drafts: [] });
+    res.json({ configured: false, drafts: [], syncConfigured: isSyncConfigured() });
     return;
   }
 
@@ -65,7 +70,7 @@ outreachRouter.get("/", async (req, res) => {
       drafts.push(entity);
     }
     drafts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    res.json({ configured: true, drafts });
+    res.json({ configured: true, drafts, syncConfigured: isSyncConfigured() });
   } catch (err) {
     console.error("Failed to list outreach drafts:", err);
     res.status(502).json({ configured: true, error: "table_fetch_failed", drafts: [] });
@@ -205,4 +210,36 @@ outreachRouter.post("/:id/reject", async (req, res) => {
     console.error(`Failed to reject outreach draft "${req.params.id}":`, err);
     res.status(502).json({ success: false, error: "table_update_failed" });
   }
+});
+
+// Guards against overlapping runs from a double-click — the script isn't
+// designed to be run concurrently against the same local sqlite db.
+let syncInFlight = false;
+
+outreachRouter.post("/sync", async (_req, res) => {
+  const agentDir = process.env.OUTREACH_AGENT_DIR;
+  if (!agentDir) {
+    res.status(503).json({ success: false, error: "sync_agent_not_configured" });
+    return;
+  }
+  if (syncInFlight) {
+    res.status(409).json({ success: false, error: "sync_already_running" });
+    return;
+  }
+
+  syncInFlight = true;
+  execFile(
+    "python",
+    ["tools/sync_to_dash.py"],
+    { cwd: agentDir, timeout: 2 * 60 * 1000 },
+    (err, stdout, stderr) => {
+      syncInFlight = false;
+      if (err) {
+        console.error("Failed to run local outreach-agent sync:", err, stderr);
+        res.status(502).json({ success: false, error: "sync_failed", output: stdout + stderr });
+        return;
+      }
+      res.json({ success: true, output: stdout });
+    }
+  );
 });

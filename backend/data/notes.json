@@ -19,5 +19,21 @@
       "storedName": "msdcatke7p79qf.pdf",
       "size": 10064
     }
+  },
+  {
+    "id": "mst4e0zt7i21z5",
+    "title": "Driving exam tips",
+    "body": "- First check headrests of seats behind\n\n- Make sure examiner's feet aren't on the yellow lines of banana\n\n- On hill start, method 3: a. clutch in b. rev between 1.5 amd 2.6. c. release clutch until car elevates d. handbreak down e. revs and slowly release clutch\n\n- From stopped, start releasing clutch while revving\n\n- From 2nd, while moving, rev when clutch is AT BITING POINT\n",
+    "topic": "Driving",
+    "createdAt": "2026-08-14T15:46:47.561Z",
+    "updatedAt": "2026-08-14T15:46:47.561Z"
+  },
+  {
+    "id": "msx2itgcvpcii1",
+    "title": "video",
+    "body": "Beat 1 — the platform (home page, ~15s)\n\nLand on localhost:8787. Narrate: \"This is the agent manager — each card is an agent.\" Point out Order\n Agent is live/Ready, the other two are greyed \"Coming soon.\" Optionally click + New agent, fill the \nmodal, hit Create — a new \"Draft\" card appears — narrate \"spinning up a new agent is just describing what it should watch and where it should post.\" Then click into Order Agent.\n\nBeat 2 — show the trigger (Gmail tab, ~10s)\nCut to Gmail. Show PO-2001 sitting unread in the inbox. This is your \"before\" shot.\n\nBeat 3 — Fetch (console, Stage 1)\nBack to console, click 1. Fetch. Live console streams real log output. Cut back to Gmail — the email is now read and labeled order-agent/processed. That label proves it's a live system, not canned data.\n\nBeat 4 — Extract (Stage 2)\nClick 2. Extract. The order appears in the Orders table with line items and confidence %. Narrate that this came from Claude reading the raw email text, not a template.\n\nBeat 5 — Match (Stage 3)\nClick 3. Match. Stepper advances, caption shows \"Matched to Demo Wholesale Co.\" Cut to HubSpot, search/open that company record so viewers see the real object it matched against.\n\nBeat 6 — Review gate (Stage 4)\nClick 4. Review gate. Since PO-2001 is clean, it auto-approves — caption flips to \"Approved — ready to post.\" (This is where PO-2002 would instead show up in the amber \"Needs review\" panel — approve it inline if you're running that second pass.)\n\nBeat 7 — Post to OMS (Stage 5)\nClick 5. Post to OMS. Caption updates to \"Posted to QuickBooks · Estimate ###\". Cut to the QuickBooks sandbox tab, open Estimates, show the new one with matching PO#, line items, and total.\n\nBeat 8 — Sync CRM (Stage 6)\nClick 6. Sync CRM. Caption updates to \"Synced to HubSpot #...\". Cut back to HubSpot, refresh the company/deal record, show the order summary that just landed on it.\n\nBeat 9 — the one-click version\nIf you sent PO-2002, run it as a single Run all — stages 1 to 6 to contrast with the step-by-step walkthrough you just did — click Approve on the review-queue card mid-run, everything else keeps flowing.\n\nBeat 10 — automation close\nClick Schedule, show the Interval/Date range/Custom tabs, hit Start schedule, show the \"Runs every 30 minutes\" chip. Good closing line: \"once it's tuned, it just runs.\"\n\nNotes\n\n- Don't cut to the .env file, terminal env vars, or the Intuit developer app's Keys tab — those are your real live credentials.\n- The console's log panel only ever prints stage progress, not secrets — safe to show full-screen.\n- If a stage button ever shows \"0 new\" mid-recording, it just means Gmail's already marked that email processed — check the Gmail tab, or send a fresh test email and re-shoot that segment.",
+    "topic": "general",
+    "createdAt": "2026-08-17T10:05:36.540Z",
+    "updatedAt": "2026-08-17T10:05:36.540Z"
   }
 ]

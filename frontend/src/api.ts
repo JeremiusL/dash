@@ -230,6 +230,7 @@ export interface OutreachDraft {
 export interface OutreachDraftsSummary {
   configured: boolean;
   drafts: OutreachDraft[];
+  syncConfigured?: boolean;
   error?: string;
 }
 
@@ -377,6 +378,8 @@ export const api = {
       request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}/approve`, { method: "POST" }),
     reject: (id: string) =>
       request<{ success: boolean; error?: string }>(`/outreach/${encodeURIComponent(id)}/reject`, { method: "POST" }),
+    sync: () =>
+      request<{ success: boolean; error?: string; output?: string }>(`/outreach/sync`, { method: "POST" }),
   },
   chess: {
     state: () => request<ChessProgress>("/chess/state"),

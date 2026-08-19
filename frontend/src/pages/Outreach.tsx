@@ -5,6 +5,7 @@ import type { OutreachDraft } from "../api";
 
 export function Outreach() {
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [syncConfigured, setSyncConfigured] = useState(false);
   const [drafts, setDrafts] = useState<OutreachDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +14,8 @@ export function Outreach() {
   const [sending, setSending] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   function refresh() {
     setError(null);
@@ -20,6 +23,7 @@ export function Outreach() {
       .list("pending_review")
       .then((summary) => {
         setConfigured(summary.configured);
+        setSyncConfigured(Boolean(summary.syncConfigured));
         setDrafts(summary.drafts);
         setEdits((prev) => {
           const next = { ...prev };
@@ -31,6 +35,20 @@ export function Outreach() {
         if (summary.error) setError(summary.error);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "failed to load outreach drafts"));
+  }
+
+  async function runSync() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const result = await api.outreach.sync();
+      setSyncResult(result.success ? result.output || "done" : result.error || "sync failed");
+      if (result.success) await refresh();
+    } catch (err) {
+      setSyncResult(err instanceof Error ? err.message : "failed to run sync");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   useEffect(() => {
@@ -116,10 +134,20 @@ export function Outreach() {
             <button className="pixel-btn" onClick={() => refresh()}>
               Refresh
             </button>
+            {syncConfigured && (
+              <button className="pixel-btn" disabled={syncing} onClick={() => runSync()}>
+                {syncing ? "Syncing..." : "Sync local agent"}
+              </button>
+            )}
           </div>
 
+          {syncResult && <p className="muted section">{syncResult}</p>}
+
           {drafts.length === 0 ? (
-            <p className="muted">No drafts waiting for review. Run the lead-gen agent from Azure Jobs to generate some.</p>
+            <p className="muted">
+              No drafts waiting for review. Run the lead-gen agent from Azure Jobs, or run{" "}
+              <code>python tools/sync_to_dash.py</code> in the local outreach-agent, to generate some.
+            </p>
           ) : (
             <ul className="list">
               {drafts.map((d) => {
