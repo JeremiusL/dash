@@ -220,7 +220,7 @@ export interface OutreachDraft {
   researchSummary: string;
   emailSubject: string;
   emailBody: string;
-  status: "pending_review" | "sending" | "sent" | "rejected";
+  status: "pending_review" | "drafting" | "drafted" | "sent" | "rejected";
   createdAt: string;
   updatedAt: string;
   sentAt?: string;

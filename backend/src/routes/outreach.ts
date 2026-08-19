@@ -2,14 +2,17 @@ import { execFile } from "node:child_process";
 import { Router } from "express";
 import { RestError } from "@azure/data-tables";
 import { getOutreachTable, isConfigured as isTableConfigured } from "../azureTables.js";
-import { isConfigured as isMailConfigured, sendMail } from "../mailer.js";
+import { isConfigured as isMailConfigured, createDraft } from "../mailer.js";
 
 export const outreachRouter = Router();
 
 const PARTITION_KEY = "draft";
 
-type DraftStatus = "pending_review" | "sending" | "sent" | "rejected";
-const VALID_STATUSES: DraftStatus[] = ["pending_review", "sending", "sent", "rejected"];
+// "sent" stays a valid status for schema compatibility with the shared table
+// contract (see outreach-agent's lib/dash_sync.py) even though nothing here
+// writes it anymore - approve only ever produces "drafted" now.
+type DraftStatus = "pending_review" | "drafting" | "drafted" | "sent" | "rejected";
+const VALID_STATUSES: DraftStatus[] = ["pending_review", "drafting", "drafted", "sent", "rejected"];
 
 interface DraftEntity {
   partitionKey: string;
@@ -28,6 +31,7 @@ interface DraftEntity {
   createdAt: string;
   updatedAt: string;
   sentAt?: string;
+  draftedAt?: string;
   source: string;
   etag?: string;
 }
@@ -92,8 +96,8 @@ outreachRouter.patch("/:id", async (req, res) => {
   try {
     const table = getOutreachTable();
     const existing = await table.getEntity<DraftEntity>(PARTITION_KEY, req.params.id);
-    if (existing.status === "sent") {
-      res.status(409).json({ success: false, error: "cannot edit a draft that has already been sent" });
+    if (existing.status === "sent" || existing.status === "drafted") {
+      res.status(409).json({ success: false, error: `cannot edit a draft that's already "${existing.status}" - editing here wouldn't change the Gmail draft` });
       return;
     }
 
@@ -137,13 +141,13 @@ outreachRouter.post("/:id/approve", async (req, res) => {
       return;
     }
 
-    // Claim the draft with an etag-conditional update before sending anything.
+    // Claim the draft with an etag-conditional update before touching Gmail.
     // Without this, two near-simultaneous approve clicks (or a client retry)
-    // could both pass the status check above and each send a duplicate email —
-    // the etag match makes only one of them win the claim.
+    // could both pass the status check above and each append a duplicate
+    // draft — the etag match makes only one of them win the claim.
     try {
       await table.updateEntity(
-        { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "sending", updatedAt: new Date().toISOString() },
+        { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "drafting", updatedAt: new Date().toISOString() },
         "Merge",
         { etag: entity.etag }
       );
@@ -156,19 +160,20 @@ outreachRouter.post("/:id/approve", async (req, res) => {
     }
 
     try {
-      await sendMail({ to: entity.contactEmail, subject: entity.emailSubject, text: entity.emailBody });
-    } catch (sendErr) {
-      // Sending failed — release the claim so the draft is retryable instead of stuck in "sending".
+      await createDraft({ to: entity.contactEmail, subject: entity.emailSubject, text: entity.emailBody });
+    } catch (draftErr) {
+      // Creating the Gmail draft failed — release the claim so the draft is
+      // retryable instead of stuck in "drafting".
       await table.updateEntity(
         { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "pending_review", updatedAt: new Date().toISOString() },
         "Merge"
       );
-      throw sendErr;
+      throw draftErr;
     }
 
     const now = new Date().toISOString();
     await table.updateEntity(
-      { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "sent", sentAt: now, updatedAt: now },
+      { partitionKey: PARTITION_KEY, rowKey: req.params.id, status: "drafted", draftedAt: now, updatedAt: now },
       "Merge"
     );
     res.json({ success: true });
@@ -177,8 +182,8 @@ outreachRouter.post("/:id/approve", async (req, res) => {
       res.status(404).json({ success: false, error: "draft_not_found" });
       return;
     }
-    console.error(`Failed to approve/send outreach draft "${req.params.id}":`, err);
-    res.status(502).json({ success: false, error: "send_failed" });
+    console.error(`Failed to create Gmail draft for outreach draft "${req.params.id}":`, err);
+    res.status(502).json({ success: false, error: "draft_failed" });
   }
 });
 

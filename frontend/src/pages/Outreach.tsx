@@ -11,7 +11,7 @@ export function Outreach() {
   const [error, setError] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, { subject: string; body: string }>>({});
   const [saving, setSaving] = useState<string | null>(null);
-  const [sending, setSending] = useState<string | null>(null);
+  const [drafting, setDrafting] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -81,8 +81,8 @@ export function Outreach() {
     }
   }
 
-  async function approveAndSend(id: string) {
-    setSending(id);
+  async function approveToDraft(id: string) {
+    setDrafting(id);
     setActionError(null);
     try {
       // If the edit fails to save, this throws and we stop here — approve
@@ -91,9 +91,9 @@ export function Outreach() {
       await api.outreach.approve(id);
       await refresh();
     } catch (err) {
-      setActionError({ id, message: err instanceof Error ? err.message : "failed to send" });
+      setActionError({ id, message: err instanceof Error ? err.message : "failed to create draft" });
     } finally {
-      setSending(null);
+      setDrafting(null);
     }
   }
 
@@ -192,10 +192,10 @@ export function Outreach() {
                       </button>
                       <button
                         className="pixel-btn pixel-btn--accent"
-                        disabled={sending === d.rowKey}
-                        onClick={() => approveAndSend(d.rowKey)}
+                        disabled={drafting === d.rowKey}
+                        onClick={() => approveToDraft(d.rowKey)}
                       >
-                        {sending === d.rowKey ? "Sending..." : "Approve & send"}
+                        {drafting === d.rowKey ? "Creating draft..." : "Approve -> Gmail draft"}
                       </button>
                       <button
                         className="pixel-btn"
