@@ -12,6 +12,7 @@ import { accountRouter } from "./routes/account.js";
 import { authRouter } from "./routes/auth.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { deployRouter } from "./routes/deploy.js";
+import { dashboardRouter } from "./routes/dashboard.js";
 import { outreachRouter } from "./routes/outreach.js";
 import { chessRouter } from "./routes/chess.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -36,6 +37,7 @@ app.use("/api/usage", requireAuth, usageRouter);
 app.use("/api/account", requireAuth, accountRouter);
 app.use("/api/jobs", requireAuth, jobsRouter);
 app.use("/api/deploy", requireAuth, deployRouter);
+app.use("/api/dashboard", requireAuth, dashboardRouter);
 app.use("/api/outreach", requireAuth, outreachRouter);
 app.use("/api/chess", requireAuth, chessRouter);
 

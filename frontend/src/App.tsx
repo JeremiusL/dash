@@ -8,6 +8,7 @@ import { Outreach } from "./pages/Outreach";
 import { Chess } from "./pages/Chess";
 import { Login } from "./pages/Login";
 import { UsageWidget } from "./components/UsageWidget";
+import { RebuildButton } from "./components/RebuildButton";
 import { api } from "./api";
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/chess" element={<Chess />} />
       </Routes>
       <UsageWidget />
+      <RebuildButton />
     </div>
   );
 }

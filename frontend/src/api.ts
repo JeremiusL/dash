@@ -389,4 +389,7 @@ export const api = {
       request<ChessProgress>("/chess/complete", { method: "POST", body: JSON.stringify(data) }),
     extend: () => request<ChessProgress>("/chess/extend", { method: "POST" }),
   },
+  dashboard: {
+    rebuild: () => request<{ success: boolean; started?: boolean; error?: string }>("/dashboard/rebuild", { method: "POST" }),
+  },
 };
