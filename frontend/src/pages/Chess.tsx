@@ -168,6 +168,18 @@ export function Chess() {
         </div>
       </div>
 
+      <div className="section">
+        <a
+          href="https://darksquares.net/train/square-colors/play"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pixel-btn pixel-btn--accent"
+          style={{ display: "block", textAlign: "center", width: "100%", textDecoration: "none" }}
+        >
+          Square Colors Trainer →
+        </a>
+      </div>
+
       {completedEntries.length > 1 && (
         <div className="section">
           <h2 className="section-title">Accuracy trend</h2>

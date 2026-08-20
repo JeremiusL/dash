@@ -5,6 +5,12 @@ type RebuildState = "idle" | "building" | "restarting" | "error";
 
 const POLL_MS = 2000;
 const TIMEOUT_MS = 5 * 60 * 1000;
+// A fast restart can flip the server down and back up entirely between two
+// polls, so "healthy" alone can't distinguish "never restarted" from
+// "already restarted" — only relying on catching the down-blip live. Once
+// this much time has passed, treat a healthy check as good enough to
+// reload even if we never observed the blip.
+const MIN_REBUILD_MS = 8000;
 
 async function isHealthy(): Promise<boolean> {
   try {
@@ -19,11 +25,12 @@ export function RebuildButton() {
   const [state, setState] = useState<RebuildState>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const sawDownRef = useRef(false);
+  const startedAtRef = useRef(0);
 
   function pollUntilBack(deadline: number) {
     window.setTimeout(async () => {
       const up = await isHealthy();
-      if (up && sawDownRef.current) {
+      if (up && (sawDownRef.current || Date.now() - startedAtRef.current > MIN_REBUILD_MS)) {
         window.location.reload();
         return;
       }
@@ -44,6 +51,7 @@ export function RebuildButton() {
     setState("building");
     setMessage(null);
     sawDownRef.current = false;
+    startedAtRef.current = Date.now();
     try {
       const result = await api.dashboard.rebuild();
       if (!result.success) {

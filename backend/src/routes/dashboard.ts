@@ -21,14 +21,32 @@ dashboardRouter.post("/rebuild", (_req, res) => {
   }
   rebuildInFlight = true;
 
-  const log = fs.openSync(LOG_PATH, "a");
-  fs.writeSync(log, `\n--- rebuild started ${new Date().toISOString()} ---\n`);
+  fs.appendFileSync(LOG_PATH, `\n--- rebuild started ${new Date().toISOString()} ---\n`);
 
-  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", REBUILD_SCRIPT], {
+  // stdio is "ignore" rather than a redirected fd: on Windows, a detached
+  // child given a raw fs.openSync() fd silently drops everything the child
+  // writes (the process still runs fine — the output just never lands).
+  // The script writes its own log lines directly instead.
+  //
+  // No `detached: true` — on this machine that flag made the child a
+  // total no-op: it exited 0 almost instantly without running any of the
+  // script (confirmed by reproduction). Child processes here already
+  // outlive their parent being killed (verified — the script's own last
+  // step kills this very process), so detaching isn't needed for that.
+  const child = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", REBUILD_SCRIPT, "-LogPath", LOG_PATH], {
     cwd: REPO_ROOT,
-    detached: true,
-    stdio: ["ignore", log, log],
+    stdio: "ignore",
   });
+
+  // spawn() failures (e.g. powershell.exe not found) surface as an async
+  // "error" event — without a listener here they were silently swallowed,
+  // leaving the log stuck at "started" with no clue why, and the in-flight
+  // flag stuck true forever.
+  child.on("error", (err) => {
+    fs.appendFileSync(LOG_PATH, `\n--- rebuild failed to start: ${err.message} ---\n`);
+    rebuildInFlight = false;
+  });
+
   child.unref();
 
   res.json({ success: true, started: true });
